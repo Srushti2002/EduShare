@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #1F1F1F;
+  /* overflow: hidden; */
+}
+
+.dropdown-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #444444 #1F1F1F;
+}
+.dropdown-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  background: #1F1F1F;
+}
+.dropdown-scrollbar::-webkit-scrollbar-thumb {
+  background: #000;
+  border-radius: 4px;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1F1F1F inset !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff !important;
+  outline: none !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
