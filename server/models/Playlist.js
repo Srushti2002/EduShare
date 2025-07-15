@@ -27,7 +27,9 @@ const playlistSchema = new mongoose.Schema(
       {
         videoId: { type: String, required: true },
         title: { type: String, required: true },
-        duration: { type: Number, required: true } // duration in seconds
+        duration: { type: Number, required: true }, // duration in seconds
+        // summary: { type: String, required: false }
+        // summary: { type: String }, // ✅ Add this to store the summary
       }
     ]
 

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Playlist = require('../models/Playlist');
+const Summary = require('../models/Summary');
 const { generateToken} = require('../middleware/jwt');
 const { getYouTubeVideoDuration } = require('../utils/youtube'); // Assuming you have a utility function to fetch video duration
 
@@ -79,7 +80,8 @@ const loginUser = async(req, res) => {
     }
     }
 
-const getUserProfile = async (req, res) => {
+
+    const getUserProfile = async (req, res) => {
     try{
         const userId = req.params.id || req.user.id;
         const user = await User.findById(userId).select('-password');
@@ -95,7 +97,6 @@ const getUserProfile = async (req, res) => {
         res.status(500).json({error: 'Internal server error'});
     }
 }
-
 
 const updateProfile = async (req, res) => {
     try {
@@ -151,7 +152,6 @@ const getFollowedMentors = async (req, res) => {
     }
 }
 
-
 const toggleFollowMentor = async (req, res) => {
   try {
     const { mentorId } = req.body;
@@ -194,6 +194,78 @@ const toggleFollowMentor = async (req, res) => {
   }
 };
 
+const getFollowersCount = async (req, res) => {
+  try{
+      const mentorId = req.params.id || req.user.id;
+      // console.log(req.params.id, req.user.id);
+      const count = await User.countDocuments({ following: mentorId});
+
+      // console.log("Followers count for mentor", mentorId, "is", count); 
+      res.json({ followersCount : count});
+  }
+
+  catch(err) {
+    console.error("Error getting followers count:", err);
+    res.status(500).json({ message: "Failed to fetch followers count"});
+  }
+}
+
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // If mentor: delete all their playlists and remove from students' following
+        if (user.role === "mentor") {
+      // Find all playlists by this mentor
+      const playlists = await Playlist.find({ mentorId: user._id });
+      const playlistIds = playlists.map(p => p._id);
+
+      // Delete all playlists by this mentor
+      await Playlist.deleteMany({ mentorId: user._id });
+
+      // Delete all summaries for these playlists
+      await Summary.deleteMany({ playlistId: { $in: playlistIds } });
+
+      // Remove these playlists from students' followingPlaylists and progress
+      await User.updateMany(
+        { followingPlaylists: { $in: playlistIds } },
+        {
+          $pull: { followingPlaylists: { $in: playlistIds } },
+          $unset: playlistIds.reduce((acc, pid) => ({
+            ...acc,
+            [`playlistProgress.${pid}`]: "",
+            [`overallPlaylistProgress.${pid}`]: ""
+          }), {})
+        }
+      );
+
+            // Remove mentor from all students' following arrays
+      await User.updateMany(
+        { following: user._id },
+        { $pull: { following: user._id } }
+      );
+    }
+
+    // If student: remove from all mentors' followers
+    if (user.role === "student") {
+      // Remove student from all mentors' followers
+      await User.updateMany(
+        { role: "mentor" },
+        { $pull: { followers: user._id } }
+      );
+    }
+
+    // Finally, delete the user
+    await user.deleteOne();
+
+    res.json({ message: "User and related data deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 const updatePlaylistProgress = async (req, res) => {
   try {
     const { playlistId, progress, overallPlaylistProgress } = req.body;
@@ -208,12 +280,29 @@ const updatePlaylistProgress = async (req, res) => {
       return res.status(403).json({ error: "Only students can update playlist progress" });
     }
 
-    user.playlistProgress.set(playlistId, progress); // progress is an object: { videoId: percent, ... }
     
-    // Save the overallPlaylistProgress sent from the frontend
-    if (typeof overallPlaylistProgress === "number") {
-      user.overallPlaylistProgress.set(playlistId, overallPlaylistProgress);
+    // --- Max logic for playlistProgress ---
+    const prevProgressObj = user.playlistProgress.get(playlistId) || {};
+    // Merge: for each videoId, keep the max percent
+    const mergedProgress = { ...prevProgressObj };
+    for (const [videoId, percent] of Object.entries(progress)) {
+      mergedProgress[videoId] = Math.max(
+        typeof mergedProgress[videoId] === "number" ? mergedProgress[videoId] : 0,
+        typeof percent === "number" ? percent : 0
+      );
     }
+    user.playlistProgress.set(playlistId, mergedProgress);
+
+    // --- Max logic for overallPlaylistProgress ---
+    if (typeof overallPlaylistProgress === "number") {
+      const prevOverall = user.overallPlaylistProgress.get(playlistId.toString());
+      const maxOverall = Math.max(
+        typeof prevOverall === "number" ? prevOverall : 0,
+        overallPlaylistProgress
+      );
+      user.overallPlaylistProgress.set(playlistId.toString(), maxOverall);
+    }
+
 
     await user.save();
 
@@ -240,44 +329,47 @@ const getPlaylistProgress = async (req, res) => {
   }
 };
 
-// Calculate overall progress for a student based on time watched across all enrolled playlists
 const calculateOverallProgress = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user || user.role !== "student") {
-      return res.status(403).json({ error: "Unauthorized" });
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+
+    if (!user || user.role !== 'student') {
+      return res.status(400).json({ message: "User not found or not a student" });
     }
 
-    // Get all playlist progress for this user
     const progressMap = user.overallPlaylistProgress;
-    if (!progressMap || progressMap.size === 0) {
+    const enrolledPlaylists = user.followingPlaylists.map(id => id.toString());
+
+    // Get progress for each enrolled playlist, default to 0 if missing
+    const progressValues = enrolledPlaylists.map(playlistId => {
+      const progress = progressMap.get(playlistId);
+      return typeof progress === 'number' ? progress : 0;
+    });
+
+    console.log("Progress Map is ")
+
+    // Check if any progress has been made
+    const hasProgress = progressValues.some(val => val > 0);
+
+    if (!hasProgress) {
       user.overallProgress = 0;
-      await user.save();
-      return res.json({ overallProgress: 0 });
+    } else {
+      const total = progressValues.reduce((a, b) => a + b, 0);
+      user.overallProgress = total / progressValues.length;
     }
 
-    let total = 0;
-    let playlistCount = user.followingPlaylists.length;
-
-    // For each playlist the user has progress in
-    for (const [playlistId, playlistProgress] of progressMap.entries()) {
-      total += playlistProgress; 
-    }
-
-    user.overallProgress = total / playlistCount;
     await user.save();
-    console.log("Overall progress calculated:", user.overallProgress);
     res.json({ overallProgress: user.overallProgress });
   } catch (error) {
-    console.error("Error in calculateOverallProgress:", error);
+    console.error("Error calculating overall progress:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-
 
 module.exports = {signUpUser, loginUser, getUserProfile, 
     updateProfile, getMentors, getFollowedMentors, 
     // followMentor, unfollowMentor,
     toggleFollowMentor,
-    updatePlaylistProgress, getPlaylistProgress, calculateOverallProgress};
+    updatePlaylistProgress, getPlaylistProgress, deleteUser,
+    calculateOverallProgress, getFollowersCount};

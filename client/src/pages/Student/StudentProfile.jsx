@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import axios from "axios";
 import EditableProfileInfo from "../../components/EditableProfileInfo";
 import maleImg from "../../assets/maleImg.jpg";
@@ -56,7 +56,7 @@ export default function StudentProfile() {
     const fetchOverallProgress = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/progress`,
+          `${import.meta.env.VITE_BACKEND_URL}/overallProgress`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setOverallProgress(res.data.overallProgress ?? 0);
@@ -136,8 +136,8 @@ export default function StudentProfile() {
     <div className="flex flex-col justify-center bg-[#1F1F1F] items-center text-white flex-1">
       <div className="w-3/5 flex flex-col px-10 py-10 justify-between bg-[#181818] max-lg:w-3/4 max-sm:w-full max-sm:px-10 max-sm:bg-[#1F1F1F]">
         <h2 className="text-3xl font-bold mb-6">Student Profile</h2>
+        
         <div className="flex flex-row items-center justify-center bg-[#232323] gap-10 p-10 mb-6 max-md:flex-col max-sm:bg-[#181818] max-md:text-center">
-          
           <img
             src={getProfileImg()}
             alt="Profile"
@@ -158,6 +158,7 @@ export default function StudentProfile() {
             setEditMode={setEditMode}
             error={error}
           />
+          
           {/* Overall Progress (Time-based) */}
           <div className="flex flex-col items-center ml-8 max-md:ml-0 max-md:mt-6">
             <svg width="80" height="80" viewBox="0 0 80 80">
@@ -166,7 +167,7 @@ export default function StudentProfile() {
                 cy="40"
                 r="34"
                 stroke="#444"
-                strokeWidth="8"
+                strokeWidth="6"
                 fill="none"
               />
               <circle
@@ -174,7 +175,7 @@ export default function StudentProfile() {
                 cy="40"
                 r="34"
                 stroke="#22c55e"
-                strokeWidth="8"
+                strokeWidth="6"
                 fill="none"
                 strokeDasharray={2 * Math.PI * 34}
                 strokeDashoffset={2 * Math.PI * 34 * (1 - (overallProgress || 0) / 100)}
@@ -193,7 +194,7 @@ export default function StudentProfile() {
                 {Math.round(overallProgress || 0)}%
               </text>
             </svg>
-            <span className="mt-2 text-sm text-gray-300" title="Time-based progress across all enrolled playlists">Overall Progress</span>
+            <span className="mt-2 text-sm text-center text-gray-300" title="Time-based progress across all enrolled playlists">Overall Progress</span>
           </div>
         </div>
 

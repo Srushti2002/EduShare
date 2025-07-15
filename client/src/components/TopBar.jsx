@@ -10,6 +10,7 @@ export default function TopBar() {
   const token = localStorage.getItem("token");
   const [profileUrl, setProfileUrl] = useState("/profile");
   const [dashboardUrl, setDashboardUrl] = useState("/student-dashboard");
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -19,6 +20,8 @@ export default function TopBar() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         dispatch(setGender(res.data.gender || "other"));
+        setUserId(res.data._id); 
+        console.log("User ID:", res.data._id);
 
         if (res.data.role === "mentor") {
           setProfileUrl("/profile");
@@ -37,7 +40,7 @@ export default function TopBar() {
 
   return (
     // <div className="w-full h-full bg-[#1F1F1F] text-white">
-      <UserMenu gender={gender} profileUrl={profileUrl} dashboardUrl={dashboardUrl} />
+      <UserMenu gender={gender} profileUrl={profileUrl} dashboardUrl={dashboardUrl} userId={userId} token={token} />
     // </div>
   );
 }

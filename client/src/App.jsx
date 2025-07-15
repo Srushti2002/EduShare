@@ -6,6 +6,7 @@ import MentorDashboard from '../src/pages/Mentor/MentorDashboard';
 import ViewPlaylist from './components/ViewPlaylist';
 import MentorProfile from './pages/Mentor/MentorProfile';
 import StudentProfile from './pages/Student/StudentProfile';
+import PlaylistTest from './components/PlaylistTest';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const protectedRoutes = [
@@ -15,6 +16,7 @@ const protectedRoutes = [
   { path: "/profile", element: <MentorProfile /> },
   { path: "/mentor/:mentorId", element: <MentorProfile /> },
   { path: "/student-profile", element: <StudentProfile /> },
+  { path: "/playlist/:id/test", element: <PlaylistTest /> },
 ];
 
 const App = () => {

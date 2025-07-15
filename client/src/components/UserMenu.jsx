@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import maleImg from "../assets/maleImg.jpg";
 import femaleImg from "../assets/femaleImg.jpg";
 import otherImg from "../assets/otherImg.png";
 
-export default function UserMenu({ gender = "male", profileUrl = "/profile", dashboardUrl="/student-dashboard" }) {
+export default function UserMenu({ gender = "male", profileUrl = "/profile", dashboardUrl="/student-dashboard", userId, token }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const menuRef = useRef();
@@ -36,7 +37,7 @@ export default function UserMenu({ gender = "male", profileUrl = "/profile", das
   }, [open]);
 
   return (
-    <div className="w-full h-full bg-[#1F1F1F] text-white pt-5 flex justify-end pr-8">
+    <div className="w-full h-full bg-[#1F1F1F] text-center text-white pt-5 flex justify-end pr-8">
       <div className="relative inline-block" ref={menuRef}>
         <img
           src={getProfileImg()}
@@ -45,7 +46,7 @@ export default function UserMenu({ gender = "male", profileUrl = "/profile", das
           onClick={() => setOpen((prev) => !prev)}
         />
         {open && (
-          <div className="absolute right-0 top-12 bg-[#181818] border border-gray-500 rounded-lg shadow-lg z-50 min-w-[140px]">
+          <div className="absolute right-0 top-12 bg-[#181818] border border-gray-500 rounded-lg shadow-lg z-50 min-w-[150px]">
             <button
               className="w-full px-4 py-2 text-left text-white hover:bg-[#444444] rounded-t-lg"
               onClick={() => {
@@ -64,12 +65,33 @@ export default function UserMenu({ gender = "male", profileUrl = "/profile", das
             >
               View Profile
             </button>
+                 
             <button
               className="w-full px-4 py-2 text-left text-white hover:bg-[#444444] rounded-b-lg"
               onClick={handleLogout}
             >
               Logout
             </button>
+            
+            <button
+              className="w-full px-4 py-2 text-left text-white hover:bg-[#444444] rounded-b-lg"
+              onClick={async () => {
+                if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+                  try {
+                    await axios.delete(
+                      `${import.meta.env.VITE_BACKEND_URL}/${userId}`,
+                      { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    localStorage.clear();
+                    window.location.href = "/";
+                  } catch (err) {
+                    alert("Failed to delete account.");
+                  }
+                }
+              }}
+            >
+              Delete Account
+            </button> 
           </div>
         )}
       </div>

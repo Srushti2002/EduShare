@@ -1,9 +1,13 @@
 const Playlist = require("../models/Playlist");
-const axios = require('axios');
 const User = require("../models/User");
+const axios = require('axios');
 const { getYouTubePlaylistVideosWithDurations } = require('../utils/youtube'); // Add this import
 require('dotenv').config(); // This must be at the top
-
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const { summaryQueue } = require("../workers/summaryWorker");
+const Summary = require("../models/Summary");
+const { generateMCQsWithGemini } = require("../utils/summaryUtils");
 
 // Add new playlist
 const createPlaylist = async (req, res) => {
@@ -22,16 +26,26 @@ const createPlaylist = async (req, res) => {
       return res.status(400).json({ message: "No videos found in playlist or failed to fetch videos" });
     }
 
+
     const newPlaylist = new Playlist({ title, description, url, mentorId, videos });
     await newPlaylist.save();
+    await Promise.all(videos.map(async (video) => {
+    await Summary.create({
+      videoId: video.videoId,
+      playlistId: newPlaylist._id,
+    });
+
+    summaryQueue.add({ videoId: video.videoId, playlistId: newPlaylist._id });
+  }));
     res.status(201).json(newPlaylist);
+
   } catch (err) {
     console.error("Error in createPlaylist:", err);
     res.status(500).json({ message: "Failed to create plalyist" });
   }
 };
 
-// Get playlists for logged-in mentor
+
 const getPlaylists = async (req, res) => {
   try {
     const { mentorId } = req.query;
@@ -66,6 +80,15 @@ const deletePlaylist = async (req, res) => {
   const { id } = req.params;
 
   try {
+    await Summary.deleteMany({ playlistId: id });
+
+    await User.updateMany(
+      { followingPlaylists: id },
+      {
+        $pull: { followingPlaylists: id },
+        $unset: { [`playlistProgress.${id}`]: "", [`overallPlaylistProgress.${id}`]: "" }
+      }
+    );
     const deleted = await Playlist.findOneAndDelete({
       _id: id,
       mentorId: req.user.id,
@@ -141,50 +164,6 @@ const getEnrolledPlaylists = async (req, res) => {
   }
 };
 
-// const enrollInPlaylist = async (req, res) => {
-//   try {
-//     const { playlistId } = req.body;
-//     if(!playlistId) {
-//       return res.status(400).json({ error: 'Playlist ID is required' });
-//     }
-
-//     const student = await User.findById(req.user.id);
-//     if(!student) {
-//       return res.status(404).json({ error: 'Student not found' });
-//     }
-//     if(!student.followingPlaylists.includes(playlistId)) {
-//       student.followingPlaylists.push(playlistId);
-//       await student.save();
-//     }
-//     res.status(200).json({ message: 'Successfully enrolled in playlist' });
-//   }
-//   catch (err) {
-//     console.error("Enrollment error:", err);
-//     res.status(500).json({ error: 'Failed to enroll in playlist' });
-//   }
-// }
-
-// const unenrollFromPlaylist = async (req, res) => {
-//   try {
-//     const { playlistId } = req.body;
-//     if (!playlistId) {
-//       return res.status(400).json({ error: "playlistId is required" });
-//     }
-//     const student = await User.findById(req.user.id);
-//     if (!student) {
-//       return res.status(404).json({ error: "Student not found" });
-//     }
-//     student.followingPlaylists = student.followingPlaylists.filter(
-//       id => id.toString() !== playlistId
-//     );
-//     await student.save();
-//     res.json({ message: "Unenrolled from playlist successfully" });
-//   } catch (error) {
-//     console.error("Error in unenrollFromPlaylist:", error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
-
 const toggleEnrollPlaylist = async (req, res) => {
   try {
     const { playlistId } = req.body;
@@ -219,6 +198,65 @@ const toggleEnrollPlaylist = async (req, res) => {
   }
 };
 
+const getPlaylistEnrollmentStats = async (req, res) => {
+  try {
+    console.log("Fetching playlist enrollment stats...");
+    const mentorId = req.user.id;
+    console.log(mentorId);
+
+    const playlists = await Playlist.find({mentorId});
+
+    const stats = await Promise.all(
+      playlists.map(async (playlist) => {
+        const enrolledCount = await User.countDocuments({
+          followingPlaylists: playlist._id
+        });
+        return {
+          playlistId: playlist._id,
+          title: playlist.title,
+          enrolledCount
+        };
+      }))
+      res.status(200).json(stats);
+  }
+  catch(err) {
+    console.error("Error fetching playlist enrollment stats:", err);
+    res.status(500).json({error: 'Failed to fetch playlist enrollment stats'})
+  }
+
+}
+
+const generateMCQsForPlaylist = async (req, res) => {
+  const { playlistId } = req.params;
+  try {
+    // Fetch all summaries for this playlist
+    const summaries = await Summary.find({ playlistId });
+    if (!summaries || summaries.length === 0) {
+      return res.status(404).json({ error: "No summaries found for this playlist." });
+    }
+
+    // Combine all summaries into one text block
+    const combinedSummary = summaries.map(s => s.summary).filter(Boolean).join("\n\n");
+
+    // Generate MCQs using Gemini API
+    if(!combinedSummary) {
+      return res.status(404).json({ error: "No valid summaries found to generate MCQs." });
+    } 
+    
+    const mcqs = await generateMCQsWithGemini(combinedSummary, 20);
+    if (!mcqs) {
+      return res.status(500).json({ error: "Failed to generate MCQs." });
+    }
+
+    res.json({ mcqs });
+  } catch (err) {
+    console.error("Error generating MCQs for playlist:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 module.exports = {createPlaylist, getPlaylists, updatePlaylist, 
   deletePlaylist, getPlaylistById, getYoutubePlaylistVideos,
-  getEnrolledPlaylists, toggleEnrollPlaylist,};
+  getEnrolledPlaylists, toggleEnrollPlaylist, getPlaylistEnrollmentStats,
+   generateMCQsForPlaylist
+};

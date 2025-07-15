@@ -22,6 +22,7 @@ export default function MentorProfile({ mentorId: propMentorId }) {
   const token = localStorage.getItem("token");
   const [loggedInUserId, setLoggedInUserId] = useState("");
   const [loggedInUserRole, setLoggedInUserRole] = useState("");
+  const [followersCount, setFollowersCount] = useState(0);
 
   // Redux state
   const name = useSelector((state) => state.user.name);
@@ -69,35 +70,101 @@ export default function MentorProfile({ mentorId: propMentorId }) {
         });
 
         setMentor(res.data);
-        // dispatch(setUser({
-        //   name: res.data.name,
-        //   bio: res.data.bio,
-        //   role: res.data.role,
-        //   email: res.data.email,
-        // }));
-        // dispatch(setGender(res.data.gender || ""));
-        // dispatch(setFields(res.data.fields || []));
         setError("");
       } catch (err) {
         setError("Failed to load profile.");
       }
     };
-    const fetchPlaylists = async () => {
+    // const fetchProfile = async () => {
+    //   try {
+    //     const url = mentorId
+    //       ? `${import.meta.env.VITE_BACKEND_URL}/profile/${mentorId}`
+    //       : `${import.meta.env.VITE_BACKEND_URL}/profile`;
+    //     const res = await axios.get(url, {
+    //       headers: { Authorization: `Bearer ${token}` },
+    //     });
+
+    //     // Always set mentor data
+    //     setMentor(res.data);
+
+    //     // If no mentorId is provided, this is the logged-in user's profile
+    //     if (!mentorId) {
+    //       setLoggedInUserId(res.data._id);
+    //       setLoggedInUserRole(res.data.role);
+    //       dispatch(setGender(res.data.gender || "other"));
+    //       dispatch(setFields(res.data.fields || []));
+    //       dispatch(setUser({
+    //         name: res.data.name,
+    //         bio: res.data.bio,
+    //         role: res.data.role,
+    //         email: res.data.email,
+    //       }));
+    //       if (res.data.role === "student") {
+    //         setStudentEnrolled(res.data.followingPlaylists || []);
+    //       }
+    //     }
+    //     setError("");
+    //   } catch (err) {
+    //     setError("Failed to load profile.");
+    //     if (!mentorId) {
+    //       setLoggedInUserId("");
+    //       setLoggedInUserRole("");
+    //     }
+    //   }
+    // };
+
+    const fetchPlaylistsAndStats = async () => {
       try {
         const url = mentorId
           ? `${import.meta.env.VITE_BACKEND_URL}/playlist?mentorId=${mentorId}`
           : `${import.meta.env.VITE_BACKEND_URL}/playlist`;
-        const res = await axios.get(url, {
+        const playlistsRes = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setPlaylists(res.data);
+        const playlistsData = playlistsRes.data;
+
+        // Fetch enrollment stats
+        const statsRes = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/playlist/enrollmentStats`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const stats = statsRes.data;
+
+        // Merge stats into playlists
+        const merged = playlistsData.map((pl) => {
+          const stat = stats.find((s) => String(s.playlistId) === String(pl._id));
+          return {
+            ...pl,
+            enrollmentCount: stat ? stat.enrolledCount : 0,
+          };
+        });
+        setPlaylists(merged);
       } catch (err) {
         setPlaylists([]);
       }
     };
+    const fetchFollowersCount = async () => {
+      try{
+        const url = mentorId
+          ? `${import.meta.env.VITE_BACKEND_URL}/followersCount/${mentorId}`
+          : `${import.meta.env.VITE_BACKEND_URL}/followersCount`;
+        const res = await axios.get(
+          url, 
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        setFollowersCount(res.data.followersCount);
+      }
+      catch(err) {
+        console.log("Error fetching followers count:", err);
+      }
+    };
+
+    
     fetchSelf();
     fetchMentor();
-    fetchPlaylists();
+    // fetchProfile();
+    fetchPlaylistsAndStats();
+    fetchFollowersCount();
   }, [token, mentorId, dispatch]);
 
   useEffect(() => {
@@ -186,6 +253,27 @@ const getProfileImg = () => {
             alt="Profile"
             className="w-1/3 h-1/3 rounded-full object-cover"
           />
+          {/* {isSelf && role === "mentor" && (
+            <button
+              className="mt-6 px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded transition"
+              onClick={async () => {
+                if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+                  try {
+                    await axios.delete(
+                      `${import.meta.env.VITE_BACKEND_URL}/${mentor._id}`,
+                      { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    localStorage.clear();
+                    window.location.href = "/";
+                  } catch (err) {
+                    alert("Failed to delete account.");
+                  }
+                }
+              }}
+            >
+              Delete My Account
+            </button>
+          )} */}
           {isSelf ? (
             <EditableProfileInfo
               editMode={editMode}
@@ -201,18 +289,22 @@ const getProfileImg = () => {
               handleUpdate={handleUpdate}
               setEditMode={setEditMode}
               error={error}
+              followersCount={followersCount}
             />
           ) : (
             <div className="w-full">
-              <p className="mb-6"><span className="font-semibold">Name:</span> {mentor.name}</p>
+              <p className="mb-2"><span className="font-semibold">Name:</span> {mentor.name}</p>
               <p className="mb-2"><span className="font-semibold">Gender:</span> {mentor.gender || "Not specified"}</p>
               <p className="mb-2"><span className="font-semibold">Bio:</span> {mentor.bio || "No bio yet"}</p>
+              
               {mentor.role === "mentor" && (
               <p className="mb-2">
                 <span className="font-semibold">Fields:</span>{" "}
                 {Array.isArray(mentor.fields) && mentor.fields.length > 0 ? mentor.fields.join(", ") : "N/A"}
-              </p>
+              </p>      
             )}
+            
+              <p className="mb-2"><span className="font-semibold">follwers : </span> {followersCount}</p>
             </div>
           )}
         </div>

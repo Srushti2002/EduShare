@@ -1,0 +1,23 @@
+version: '3'
+services:
+  
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  backend:
+    build: ./server
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGODB_URL=mongodb+srv://srushtideshmukh54:q7RRQok57lKbgQOV@cluster0.fuh7nda.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+  frontend:
+    build: ./client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend

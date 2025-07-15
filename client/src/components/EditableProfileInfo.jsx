@@ -14,6 +14,7 @@ export default function EditableProfileInfo({
   handleUpdate,
   setEditMode,
   error,
+  followersCount
 }) {
   return (
     <>
@@ -33,6 +34,11 @@ export default function EditableProfileInfo({
             <p className="mb-2">
               <span className="font-semibold">Fields : </span>{" "}
               {Array.isArray(fields) && fields.length > 0 ? fields.join(", ") : "N/A"}
+            </p>
+          )}
+          {role === "mentor" && (
+            <p className="mb-2">
+              <span className="font-semibold">Followers : </span> {followersCount}
             </p>
           )}
           <button

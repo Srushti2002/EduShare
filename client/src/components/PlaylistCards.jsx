@@ -9,6 +9,7 @@ export default function PlaylistCards({
   handleToggleEnroll,
 }) {
   const navigate = useNavigate();
+  console.log("isSelf:", isSelf, "loggedInUserRole:", loggedInUserRole);
 
   return (
     <>
@@ -26,6 +27,7 @@ export default function PlaylistCards({
               </div>
               <span className="block text-gray-300">{pl.description}</span>
             </div>
+            
             {!isSelf && loggedInUserRole === "student" && (
               <button
                 className={`mt-2 md:mt-0 md:ml-4 px-4 py-1 rounded text-white ${
@@ -41,6 +43,13 @@ export default function PlaylistCards({
                 {studentEnrolled.includes(pl._id) ? "Unenroll" : "Enroll"}
               </button>
             )}
+            {isSelf && loggedInUserRole === "mentor" && (
+              <div className="text-white font-semibold hover:text-purple-700">
+               {pl.enrollmentCount} enrolled
+              </div>
+            )}
+
+
           </li>
         ))}
       </ul>
