@@ -48,7 +48,7 @@ export default function UserMenu({ gender = "male", profileUrl = "/profile", das
         {open && (
           <div className="absolute right-0 top-12 bg-[#181818] border border-gray-500 rounded-lg shadow-lg z-50 min-w-[150px]">
             <button
-              className="w-full px-4 py-2 text-left text-white hover:bg-[#444444] rounded-t-lg"
+              className="w-full px-4 py-2 text-center text-white hover:bg-[#444444] rounded-t-lg"
               onClick={() => {
                 setOpen(false);
                 navigate(dashboardUrl);
@@ -57,7 +57,7 @@ export default function UserMenu({ gender = "male", profileUrl = "/profile", das
               Dashboard
             </button>
             <button
-              className="w-full px-4 py-2 text-left text-white hover:bg-[#444444]"
+              className="w-full px-4 py-2 text-white hover:bg-[#444444]"
               onClick={() => {
                 setOpen(false);
                 navigate(profileUrl);
@@ -67,14 +67,14 @@ export default function UserMenu({ gender = "male", profileUrl = "/profile", das
             </button>
                  
             <button
-              className="w-full px-4 py-2 text-left text-white hover:bg-[#444444] rounded-b-lg"
+              className="w-full px-4 py-2 text-white hover:bg-[#444444] rounded-b-lg"
               onClick={handleLogout}
             >
               Logout
             </button>
             
             <button
-              className="w-full px-4 py-2 text-left text-white hover:bg-[#444444] rounded-b-lg"
+              className="w-full px-4 py-2 text-white hover:bg-[#444444] rounded-b-lg"
               onClick={async () => {
                 if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
                   try {

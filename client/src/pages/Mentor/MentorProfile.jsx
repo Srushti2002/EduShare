@@ -292,7 +292,7 @@ const getProfileImg = () => {
               followersCount={followersCount}
             />
           ) : (
-            <div className="w-full">
+            <div className="text-center w-full">
               <p className="mb-2"><span className="font-semibold">Name:</span> {mentor.name}</p>
               <p className="mb-2"><span className="font-semibold">Gender:</span> {mentor.gender || "Not specified"}</p>
               <p className="mb-2"><span className="font-semibold">Bio:</span> {mentor.bio || "No bio yet"}</p>

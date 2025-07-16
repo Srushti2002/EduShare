@@ -18,9 +18,9 @@ export default function EditableProfileInfo({
 }) {
   return (
     <>
-      {error && <div className="text-red-500 mb-2">{error}</div>}
+      {error && <div className=" text-red-500 mb-2">{error}</div>}
       {!editMode ? (
-        <div className="w-full leading-[1.5]">
+        <div className="w-full text-center leading-[1.5]">
           <p className="mb-2">
             <span className="font-semibold">Name : </span> {name}
           </p>
