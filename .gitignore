@@ -1,5 +1,6 @@
 /client/node_modules      
 /client/rought.txt
 /client/.env
+/client/.env.production
 /server/node_modules  
 /server/.env

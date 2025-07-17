@@ -11,7 +11,7 @@ const MentorDashboard = () => {
   const [editingId, setEditingId] = useState(null);
 
      const API_BASE_URL =
-    import.meta.env.NODE_ENV === "development"
+    import.meta.env.MODE === "development"
       ? import.meta.env.VITE_BACKEND_URL // Hosted API
       : import.meta.env.VITE_BACKEND_URL_PROD;  
       
