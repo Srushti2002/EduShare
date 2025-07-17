@@ -26,6 +26,7 @@ const SignupLogin = () => {
   const dropdownRef = useRef();
 
   const API_BASE_URL = import.meta.env.VITE_BACKEND_URL_PROD;
+  console.log("API_BASE_URL:", API_BASE_URL);
 
   useEffect(() => {
     function handleClickOutside(event) {
