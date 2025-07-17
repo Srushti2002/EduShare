@@ -25,6 +25,11 @@ const SignupLogin = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef();
 
+  const API_BASE_URL =
+    import.meta.env.NODE_ENV === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;
+
   useEffect(() => {
     function handleClickOutside(event) {
    
@@ -78,7 +83,7 @@ const SignupLogin = () => {
     e.preventDefault();
 
     try {
-      const url = isLogin ? "http://localhost:10000/login" : "http://localhost:10000/signup";
+      const url = isLogin ? `${API_BASE_URL}/login` : `${API_BASE_URL}/signup`;
       const submitData = { ...formData };
       if (isLogin || formData.role !== "mentor") {
         delete submitData.fields;

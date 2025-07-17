@@ -14,15 +14,20 @@ export default function ViewPlaylist() {
   const token = localStorage.getItem('token');
   const saveTimeout = useRef();
 
+  const API_BASE_URL =
+    import.meta.env.NODE_ENV === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;
+
   useEffect(() => {
     const fetchPlaylist = async () => {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/playlist/${id}`, {
+      const res = await axios.get(`${API_BASE_URL}/playlist/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPlaylist(res.data);
 
       const videoRes = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/playlist/youtube-videos/${id}`,
+        `${API_BASE_URL}/playlist/youtube-videos/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setVideos(videoRes.data);
@@ -30,7 +35,7 @@ export default function ViewPlaylist() {
 
     const fetchProfile = async () => {
       const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/profile`,
+        `${API_BASE_URL}/profile`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setRole(res.data.role);
@@ -48,7 +53,7 @@ export default function ViewPlaylist() {
     const fetchProgress = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/progress/${id}`,
+          `${API_BASE_URL}/progress/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setProgress(res.data.progress || {});
@@ -67,7 +72,7 @@ export default function ViewPlaylist() {
         console.log("Saving progress:", progress); // <-- Add this
         console.log("Overall progress:", overallProgress); // <-- Add this
         axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/progress`,
+          `${API_BASE_URL}/progress`,
           { playlistId: id, progress, overallPlaylistProgress: overallProgress },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -79,7 +84,7 @@ export default function ViewPlaylist() {
   // Unified toggle enroll/unenroll
   const handleToggleEnroll = async () => {
     await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/playlist/toggleEnroll`,
+      `${API_BASE_URL}/playlist/toggleEnroll`,
       { playlistId: id },
       { headers: { Authorization: `Bearer ${token}` } }
     );

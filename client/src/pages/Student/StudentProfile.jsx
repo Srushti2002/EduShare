@@ -19,6 +19,10 @@ export default function StudentProfile() {
   const token = localStorage.getItem("token");
   const [overallProgress, setOverallProgress] = useState(0);
 
+    const API_BASE_URL =
+    import.meta.env.NODE_ENV === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;  
 
   // Redux state
   const name = useSelector((state) => state.user.name);
@@ -35,7 +39,7 @@ export default function StudentProfile() {
     const fetchProfile = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/profile`,
+          `${API_BASE_URL}/profile`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setStudent(res.data);
@@ -56,7 +60,7 @@ export default function StudentProfile() {
     const fetchOverallProgress = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/overallProgress`,
+          `${API_BASE_URL}/overallProgress`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setOverallProgress(res.data.overallProgress ?? 0);
@@ -69,7 +73,7 @@ export default function StudentProfile() {
     const fetchMentors = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/mentors/following`,
+          `${API_BASE_URL}/mentors/following`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setMentors(res.data);
@@ -82,7 +86,7 @@ export default function StudentProfile() {
     const fetchPlaylists = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/playlist/enrolled`,
+          `${API_BASE_URL}/playlist/enrolled`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setPlaylists(res.data);
@@ -104,7 +108,7 @@ export default function StudentProfile() {
     try {
       const updateData = { name, bio, gender };
       const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/profile`,
+        `${API_BASE_URL}/profile`,
         updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -137,27 +141,29 @@ export default function StudentProfile() {
       <div className="w-3/5 flex flex-col px-10 py-10 justify-between bg-[#181818] max-lg:w-3/4 max-sm:w-full max-sm:px-10 max-sm:bg-[#1F1F1F]">
         <h2 className="text-3xl font-bold mb-6">Student Profile</h2>
         
-        <div className="flex flex-row items-center justify-center bg-[#232323] gap-10 p-10 mb-6 max-md:flex-col max-sm:bg-[#181818] max-md:text-center">
-          <img
-            src={getProfileImg()}
-            alt="Profile"
-            style={{ width: 100, height: 100, borderRadius: "50%", marginBottom: 20 }}
-          />
-          <EditableProfileInfo
-            editMode={editMode}
-            name={name}
-            setName={(val) => dispatch(setUser({ name: val }))}
-            bio={bio}
-            setBio={(val) => dispatch(setUser({ bio: val }))}
-            gender={gender}
-            setGender={(val) => dispatch(setGender(val))}
-            fields={[]} // students don't have fields
-            setFields={() => {}}
-            role="student"
-            handleUpdate={handleUpdate}
-            setEditMode={setEditMode}
-            error={error}
-          />
+        <div className="flex flex-row items-center justify-around bg-[#232323] gap-10 p-10 mb-6 max-md:flex-col max-sm:bg-[#181818] max-md:text-center">
+          {/* <div className="flex flex-rows items-center gap-10"> */}
+            <img
+              src={getProfileImg()}
+              alt="Profile"
+              style={{ width: 100, height: 100, borderRadius: "50%", marginBottom: 20 }}
+            />
+            <EditableProfileInfo
+              editMode={editMode}
+              name={name}
+              setName={(val) => dispatch(setUser({ name: val }))}
+              bio={bio}
+              setBio={(val) => dispatch(setUser({ bio: val }))}
+              gender={gender}
+              setGender={(val) => dispatch(setGender(val))}
+              fields={[]} // students don't have fields
+              setFields={() => {}}
+              role="student"
+              handleUpdate={handleUpdate}
+              setEditMode={setEditMode}
+              error={error}
+            />
+          {/* </div> */}
           
           {/* Overall Progress (Time-based) */}
           <div className="flex flex-col items-center ml-8 max-md:ml-0 max-md:mt-6">

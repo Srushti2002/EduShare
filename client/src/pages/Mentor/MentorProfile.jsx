@@ -24,6 +24,11 @@ export default function MentorProfile({ mentorId: propMentorId }) {
   const [loggedInUserRole, setLoggedInUserRole] = useState("");
   const [followersCount, setFollowersCount] = useState(0);
 
+    const API_BASE_URL =
+    import.meta.env.NODE_ENV === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;  // Local API
+
   // Redux state
   const name = useSelector((state) => state.user.name);
   const bio = useSelector((state) => state.user.bio);
@@ -39,7 +44,7 @@ export default function MentorProfile({ mentorId: propMentorId }) {
     const fetchSelf = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/profile`,
+          `${API_BASE_URL}/profile`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setLoggedInUserId(res.data._id);
@@ -63,8 +68,8 @@ export default function MentorProfile({ mentorId: propMentorId }) {
     const fetchMentor = async () => {
       try {
         const url = mentorId
-          ? `${import.meta.env.VITE_BACKEND_URL}/profile/${mentorId}`
-          : `${import.meta.env.VITE_BACKEND_URL}/profile`;
+          ? `${API_BASE_URL}/profile/${mentorId}`
+          : `${API_BASE_URL}/profile`;
         const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -78,8 +83,8 @@ export default function MentorProfile({ mentorId: propMentorId }) {
     // const fetchProfile = async () => {
     //   try {
     //     const url = mentorId
-    //       ? `${import.meta.env.VITE_BACKEND_URL}/profile/${mentorId}`
-    //       : `${import.meta.env.VITE_BACKEND_URL}/profile`;
+    //       ? `${API_BASE_URL}/profile/${mentorId}`
+    //       : `${API_BASE_URL}/profile`;
     //     const res = await axios.get(url, {
     //       headers: { Authorization: `Bearer ${token}` },
     //     });
@@ -116,8 +121,8 @@ export default function MentorProfile({ mentorId: propMentorId }) {
     const fetchPlaylistsAndStats = async () => {
       try {
         const url = mentorId
-          ? `${import.meta.env.VITE_BACKEND_URL}/playlist?mentorId=${mentorId}`
-          : `${import.meta.env.VITE_BACKEND_URL}/playlist`;
+          ? `${API_BASE_URL}/playlist?mentorId=${mentorId}`
+          : `${API_BASE_URL}/playlist`;
         const playlistsRes = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -125,7 +130,7 @@ export default function MentorProfile({ mentorId: propMentorId }) {
 
         // Fetch enrollment stats
         const statsRes = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/playlist/enrollmentStats`,
+          `${API_BASE_URL}/playlist/enrollmentStats`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const stats = statsRes.data;
@@ -146,8 +151,8 @@ export default function MentorProfile({ mentorId: propMentorId }) {
     const fetchFollowersCount = async () => {
       try{
         const url = mentorId
-          ? `${import.meta.env.VITE_BACKEND_URL}/followersCount/${mentorId}`
-          : `${import.meta.env.VITE_BACKEND_URL}/followersCount`;
+          ? `${API_BASE_URL}/followersCount/${mentorId}`
+          : `${API_BASE_URL}/followersCount`;
         const res = await axios.get(
           url, 
           { headers: { Authorization: `Bearer ${token}` } }
@@ -179,7 +184,7 @@ export default function MentorProfile({ mentorId: propMentorId }) {
       const updateData = { name, bio, gender };
       if (role === "mentor") updateData.fields = fields;
       const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/profile`,
+        `${API_BASE_URL}/profile`,
         updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -201,7 +206,7 @@ export default function MentorProfile({ mentorId: propMentorId }) {
 
   // const handleEnroll = async (playlistId) => {
   //   await axios.post(
-  //     `${import.meta.env.VITE_BACKEND_URL}/playlist/enroll`,
+  //     `${API_BASE_URL}/playlist/enroll`,
   //     { playlistId },
   //     { headers: { Authorization: `Bearer ${token}` } }
   //   );
@@ -210,7 +215,7 @@ export default function MentorProfile({ mentorId: propMentorId }) {
 
   // const handleUnenroll = async (playlistId) => {
   //   await axios.post(
-  //     `${import.meta.env.VITE_BACKEND_URL}/playlist/unenroll`,
+  //     `${API_BASE_URL}/playlist/unenroll`,
   //     { playlistId },
   //     { headers: { Authorization: `Bearer ${token}` } }
   //   );
@@ -220,7 +225,7 @@ export default function MentorProfile({ mentorId: propMentorId }) {
   const handleToggleEnroll = async (playlistId) => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/playlist/toggleEnroll`,
+      `${API_BASE_URL}/playlist/toggleEnroll`,
       { playlistId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -260,7 +265,7 @@ const getProfileImg = () => {
                 if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
                   try {
                     await axios.delete(
-                      `${import.meta.env.VITE_BACKEND_URL}/${mentor._id}`,
+                      `${API_BASE_URL}/${mentor._id}`,
                       { headers: { Authorization: `Bearer ${token}` } }
                     );
                     localStorage.clear();

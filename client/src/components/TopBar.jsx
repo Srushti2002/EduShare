@@ -12,11 +12,16 @@ export default function TopBar() {
   const [dashboardUrl, setDashboardUrl] = useState("/student-dashboard");
   const [userId, setUserId] = useState(null);
 
+  const API_BASE_URL =
+    import.meta.env.NODE_ENV === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/profile`,
+          `${API_BASE_URL}/profile`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         dispatch(setGender(res.data.gender || "other"));

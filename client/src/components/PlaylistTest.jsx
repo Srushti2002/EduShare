@@ -9,11 +9,16 @@ export default function PlaylistTest() {
   const [selected, setSelected] = useState({}); // { [mcqIdx]: optionIdx }
   const token = localStorage.getItem("token");
 
+  const API_BASE_URL =
+    import.meta.env.NODE_ENV === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;
+    
   useEffect(() => {
     const fetchMCQs = async () => {
       try {
         const res = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/playlist/${id}/generate-mcqs`,
+          `${API_BASE_URL}/playlist/${id}/generate-mcqs`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );

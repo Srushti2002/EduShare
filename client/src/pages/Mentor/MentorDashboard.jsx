@@ -10,13 +10,18 @@ const MentorDashboard = () => {
   const [playlists, setPlaylists] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
+     const API_BASE_URL =
+    import.meta.env.NODE_ENV === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;  
+      
   const token = localStorage.getItem("token");
   console.log(`Token : ${token}`);
 
   // Fetch existing playlists
   const fetchPlaylists = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/playlist`, {
+      const res = await axios.get(`${API_BASE_URL}/playlist`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPlaylists(res.data);
@@ -40,14 +45,14 @@ const MentorDashboard = () => {
     try {
       if (editingId) {
         await axios.put(
-          `${import.meta.env.VITE_BACKEND_URL}/playlist/${editingId}`,
+          `${API_BASE_URL}/playlist/${editingId}`,
           { title, description, url },
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setEditingId(null);
       } else {
         await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/playlist`,
+          `${API_BASE_URL}/playlist`,
           { title, description, url },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -75,7 +80,7 @@ const MentorDashboard = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/playlist/${id}`, {
+      await axios.delete(`${API_BASE_URL}/playlist/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchPlaylists();

@@ -10,6 +10,11 @@ export default function StudentDashboard() {
   const [otherMentors, setOtherMentors] = useState([]);
   const token = localStorage.getItem("token");
 
+    const API_BASE_URL =
+    import.meta.env.NODE_ENV === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;  
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
@@ -28,7 +33,7 @@ export default function StudentDashboard() {
     // Fetch all mentors and student's following list
     const fetchMentors = async () => {
       const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/mentors?search=${debouncedSearch}`,
+        `${API_BASE_URL}/mentors?search=${debouncedSearch}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMentors(res.data);
@@ -36,7 +41,7 @@ export default function StudentDashboard() {
 
     const fetchFollowed = async () => {
       const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/mentors/following`,
+        `${API_BASE_URL}/mentors/following`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setFollowed(res.data);
@@ -55,13 +60,13 @@ export default function StudentDashboard() {
   // Unified toggle follow/unfollow handler
   const handleToggleFollow = async (mentorId) => {
     await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/mentors/toggleFollow`,
+      `${API_BASE_URL}/mentors/toggleFollow`,
       { mentorId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
     // Refresh lists
     const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL}/mentors/following`,
+      `${API_BASE_URL}/mentors/following`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     setFollowed(res.data);

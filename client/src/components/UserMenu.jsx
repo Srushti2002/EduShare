@@ -10,6 +10,11 @@ export default function UserMenu({ gender = "male", profileUrl = "/profile", das
   const navigate = useNavigate();
   const menuRef = useRef();
 
+  const API_BASE_URL =
+    import.meta.env.NODE_ENV === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;
+
   const getProfileImg = () => {
     if (gender === "female") return femaleImg;
     if (gender === "other") return otherImg;
@@ -79,7 +84,7 @@ export default function UserMenu({ gender = "male", profileUrl = "/profile", das
                 if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
                   try {
                     await axios.delete(
-                      `${import.meta.env.VITE_BACKEND_URL}/${userId}`,
+                      `${API_BASE_URL}/${userId}`,
                       { headers: { Authorization: `Bearer ${token}` } }
                     );
                     localStorage.clear();
