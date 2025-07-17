@@ -4,29 +4,32 @@ FROM node:18
 # 2. Set working directory
 WORKDIR /app
 
-# 3. Copy package files and install dependencies
+# 3. Declare build argument for VITE_BACKEND_URL_PROD
+ARG VITE_BACKEND_URL_PROD
+ENV VITE_BACKEND_URL_PROD=$VITE_BACKEND_URL_PROD
+
+# 4. Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# 4. Copy the rest of the code
+# 5. Copy the rest of the code
 COPY . .
 
-# 5. Inject Render env vars into .env.production
+# 6. Inject env var into .env.production
 RUN echo "VITE_BACKEND_URL_PROD=$VITE_BACKEND_URL_PROD" > .env.production
-RUN cat .env.production  
+RUN cat .env.production
 
-# 6. Build the app
+# 7. Build the app
 RUN npm run build
 
-# 7. Install simple HTTP server to serve static files
+# 8. Install simple HTTP server to serve static files
 RUN npm install -g serve
 
-# 8. Expose port
+# 9. Expose port
 EXPOSE 3000
 
-# 9. Start the frontend
-CMD ["serve", "-s", "dist", "-l", "3000"]  
-
+# 10. Start the frontend
+CMD ["serve", "-s", "dist", "-l", "3000"]
 
 # # Use official Node image
 # FROM node:18
