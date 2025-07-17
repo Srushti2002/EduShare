@@ -48,10 +48,8 @@ app.use('/api/ai', playlistRoute); // You probably want a different route file h
 // -----------------------
 // 🚀 Start Server
 // -----------------------
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is listening on ${PORT}`);
-});
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 
 
