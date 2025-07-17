@@ -38,11 +38,14 @@ COPY . .
 # 4. Install dependencies
 RUN npm install
 
-# 5. Build the app
+# 5. Inject Render env vars into .env.production
+RUN echo "VITE_BACKEND_URL_PROD=$VITE_BACKEND_URL_PROD" > .env.production
+
+# 6. Build the app
 RUN npm run build
 
-# 6. Expose the port Vite preview uses
+# 7. Expose the port Vite preview uses
 EXPOSE 4173
 
-# 7. Start Vite preview server (bind to 0.0.0.0 to allow external access)
+# 8. Start Vite preview server (bind to 0.0.0.0 to allow external access)
 CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
