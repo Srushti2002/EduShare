@@ -25,8 +25,10 @@ const SignupLogin = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef();
 
-  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL_PROD;
-  console.log("API_BASE_URL:", API_BASE_URL);
+  const API_BASE_URL =
+    import.meta.env.MODE === "development"
+      ? import.meta.env.VITE_BACKEND_URL // Hosted API
+      : import.meta.env.VITE_BACKEND_URL_PROD;
 
   useEffect(() => {
     function handleClickOutside(event) {
