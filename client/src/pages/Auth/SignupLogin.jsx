@@ -78,7 +78,7 @@ const SignupLogin = () => {
     e.preventDefault();
 
     try {
-      const url = isLogin ? "http://localhost:5000/login" : "http://localhost:5000/signup";
+      const url = isLogin ? "http://localhost:10000/login" : "http://localhost:10000/signup";
       const submitData = { ...formData };
       if (isLogin || formData.role !== "mentor") {
         delete submitData.fields;
