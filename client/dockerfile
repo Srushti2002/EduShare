@@ -1,3 +1,33 @@
+# 1. Base image
+FROM node:18
+
+# 2. Set working directory
+WORKDIR /app
+
+# 3. Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# 4. Copy the rest of the code
+COPY . .
+
+# 5. Inject Render env vars into .env.production
+RUN echo "VITE_BACKEND_URL_PROD=$VITE_BACKEND_URL_PROD" > .env.production
+RUN cat .env.production  
+
+# 6. Build the app
+RUN npm run build
+
+# 7. Install simple HTTP server to serve static files
+RUN npm install -g serve
+
+# 8. Expose port
+EXPOSE 3000
+
+# 9. Start the frontend
+CMD ["serve", "-s", "dist", "-l", "3000"]  
+
+
 # # Use official Node image
 # FROM node:18
 
@@ -26,26 +56,26 @@
 
 
     
-# 1. Base image
-FROM node:18
+# # 1. Base image
+# FROM node:18
 
-# 2. Set working directory
-WORKDIR /app
+# # 2. Set working directory
+# WORKDIR /app
 
-# 3. Copy everything
-COPY . .
+# # 3. Copy everything
+# COPY . .
 
-# 4. Install dependencies
-RUN npm install
+# # 4. Install dependencies
+# RUN npm install
 
-# 5. Inject Render env vars into .env.production
-RUN echo "VITE_BACKEND_URL_PROD=$VITE_BACKEND_URL_PROD" > .env.production
+# # 5. Inject Render env vars into .env.production
+# RUN echo "VITE_BACKEND_URL_PROD=$VITE_BACKEND_URL_PROD" > .env.production
 
-# 6. Build the app
-RUN npm run build
+# # 6. Build the app
+# RUN npm run build
 
-# 7. Expose the port Vite preview uses
-EXPOSE 4173
+# # 7. Expose the port Vite preview uses
+# EXPOSE 4173
 
-# 8. Start Vite preview server (bind to 0.0.0.0 to allow external access)
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
+# # 8. Start Vite preview server (bind to 0.0.0.0 to allow external access)
+# CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
