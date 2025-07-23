@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import EditableProfileInfo from "../../components/EditableProfileInfo";
 import maleImg from "../../assets/maleImg.jpg";
@@ -80,43 +80,7 @@ export default function MentorProfile({ mentorId: propMentorId }) {
         setError("Failed to load profile.");
       }
     };
-    // const fetchProfile = async () => {
-    //   try {
-    //     const url = mentorId
-    //       ? `${API_BASE_URL}/profile/${mentorId}`
-    //       : `${API_BASE_URL}/profile`;
-    //     const res = await axios.get(url, {
-    //       headers: { Authorization: `Bearer ${token}` },
-    //     });
 
-    //     // Always set mentor data
-    //     setMentor(res.data);
-
-    //     // If no mentorId is provided, this is the logged-in user's profile
-    //     if (!mentorId) {
-    //       setLoggedInUserId(res.data._id);
-    //       setLoggedInUserRole(res.data.role);
-    //       dispatch(setGender(res.data.gender || "other"));
-    //       dispatch(setFields(res.data.fields || []));
-    //       dispatch(setUser({
-    //         name: res.data.name,
-    //         bio: res.data.bio,
-    //         role: res.data.role,
-    //         email: res.data.email,
-    //       }));
-    //       if (res.data.role === "student") {
-    //         setStudentEnrolled(res.data.followingPlaylists || []);
-    //       }
-    //     }
-    //     setError("");
-    //   } catch (err) {
-    //     setError("Failed to load profile.");
-    //     if (!mentorId) {
-    //       setLoggedInUserId("");
-    //       setLoggedInUserRole("");
-    //     }
-    //   }
-    // };
 
     const fetchPlaylistsAndStats = async () => {
       try {
@@ -204,23 +168,6 @@ export default function MentorProfile({ mentorId: propMentorId }) {
     }
   };
 
-  // const handleEnroll = async (playlistId) => {
-  //   await axios.post(
-  //     `${API_BASE_URL}/playlist/enroll`,
-  //     { playlistId },
-  //     { headers: { Authorization: `Bearer ${token}` } }
-  //   );
-  //   setStudentEnrolled((prev) => [...prev, playlistId]);
-  // };
-
-  // const handleUnenroll = async (playlistId) => {
-  //   await axios.post(
-  //     `${API_BASE_URL}/playlist/unenroll`,
-  //     { playlistId },
-  //     { headers: { Authorization: `Bearer ${token}` } }
-  //   );
-  //   setStudentEnrolled((prev) => prev.filter((id) => id !== playlistId));
-  // };
 
   const handleToggleEnroll = async (playlistId) => {
   try {
@@ -258,27 +205,6 @@ const getProfileImg = () => {
             alt="Profile"
             className="w-1/3 h-1/3 rounded-full object-cover"
           />
-          {/* {isSelf && role === "mentor" && (
-            <button
-              className="mt-6 px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded transition"
-              onClick={async () => {
-                if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-                  try {
-                    await axios.delete(
-                      `${API_BASE_URL}/${mentor._id}`,
-                      { headers: { Authorization: `Bearer ${token}` } }
-                    );
-                    localStorage.clear();
-                    window.location.href = "/";
-                  } catch (err) {
-                    alert("Failed to delete account.");
-                  }
-                }
-              }}
-            >
-              Delete My Account
-            </button>
-          )} */}
           {isSelf ? (
             <EditableProfileInfo
               editMode={editMode}

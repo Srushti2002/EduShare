@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { useDispatch } from "react-redux";
+import { setUser, setGender, setFields } from "../../store/userSlice";
 
 const fieldOptions = [
   "Web Development",
@@ -14,6 +16,7 @@ const fieldOptions = [
 ];
 
 const SignupLogin = () => {
+  const dispatch = useDispatch();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
@@ -63,21 +66,29 @@ const SignupLogin = () => {
     setFormData({ name: "", email: "", password: "", role: "student", fields: [] });
   };
 
+  // const handleChange = (e) => {
+  //   const { name, value, options, multiple } = e.target;
+  //   if (name === "fields") {
+  //     // Handle multi-select
+  //     const selected = Array.from(options)
+  //       .filter((opt) => opt.selected)
+  //       .map((opt) => opt.value);
+  //     setFormData((prev) => ({ ...prev, fields: selected }));
+  //   } else {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       [name]: value,
+  //     }));
+  //   }
+  // };
   const handleChange = (e) => {
-    const { name, value, options, multiple } = e.target;
-    if (name === "fields") {
-      // Handle multi-select
-      const selected = Array.from(options)
-        .filter((opt) => opt.selected)
-        .map((opt) => opt.value);
-      setFormData((prev) => ({ ...prev, fields: selected }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,18 +102,27 @@ const SignupLogin = () => {
       const { data } = await axios.post(url, submitData);
 
       if (data.token) {
-        localStorage.setItem("token", data.token);
-      } else {
-        alert("Token missing in response");
-        return;
-      }
-      // alert(`${isLogin ? "Login" : "Signup"} successful!`);
+      localStorage.setItem("token", data.token);
+      // Dispatch user info to Redux
+      dispatch(setUser({
+        name: data.name,
+        email: data.email,
+        bio: data.bio,
+        role: data.role,
+        fields: data.fields || [],
+      }));
+      dispatch(setGender(data.gender || "male"));
+      dispatch(setFields(data.fields || []));
+    } else {
+      alert("Token missing in response");
+      return;
+    }
 
-      if (data.role === "mentor") {
-        window.location.href = "/mentor-dashboard";
-      } else {
-        window.location.href = "/student-dashboard";
-      }
+    if (data.role === "mentor") {
+      window.location.href = "/mentor-dashboard";
+    } else {
+      window.location.href = "/student-dashboard";
+    }
     } catch (error) {
       console.error("Error:", error.response?.data?.error || error.message);
       alert(error.response?.data?.error || "Something went wrong");

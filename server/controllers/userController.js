@@ -210,61 +210,61 @@ const getFollowersCount = async (req, res) => {
   }
 }
 
-const deleteUser = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
+  const deleteUser = async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ error: "User not found" });
 
-    // If mentor: delete all their playlists and remove from students' following
-        if (user.role === "mentor") {
-      // Find all playlists by this mentor
-      const playlists = await Playlist.find({ mentorId: user._id });
-      const playlistIds = playlists.map(p => p._id);
+      // If mentor: delete all their playlists and remove from students' following
+          if (user.role === "mentor") {
+        // Find all playlists by this mentor
+        const playlists = await Playlist.find({ mentorId: user._id });
+        const playlistIds = playlists.map(p => p._id);
 
-      // Delete all playlists by this mentor
-      await Playlist.deleteMany({ mentorId: user._id });
+        // Delete all playlists by this mentor
+        await Playlist.deleteMany({ mentorId: user._id });
 
-      // Delete all summaries for these playlists
-      await Summary.deleteMany({ playlistId: { $in: playlistIds } });
+        // Delete all summaries for these playlists
+        await Summary.deleteMany({ playlistId: { $in: playlistIds } });
 
-      // Remove these playlists from students' followingPlaylists and progress
-      await User.updateMany(
-        { followingPlaylists: { $in: playlistIds } },
-        {
-          $pull: { followingPlaylists: { $in: playlistIds } },
-          $unset: playlistIds.reduce((acc, pid) => ({
-            ...acc,
-            [`playlistProgress.${pid}`]: "",
-            [`overallPlaylistProgress.${pid}`]: ""
-          }), {})
-        }
-      );
+        // Remove these playlists from students' followingPlaylists and progress
+        await User.updateMany(
+          { followingPlaylists: { $in: playlistIds } },
+          {
+            $pull: { followingPlaylists: { $in: playlistIds } },
+            $unset: playlistIds.reduce((acc, pid) => ({
+              ...acc,
+              [`playlistProgress.${pid}`]: "",
+              [`overallPlaylistProgress.${pid}`]: ""
+            }), {})
+          }
+        );
 
-            // Remove mentor from all students' following arrays
-      await User.updateMany(
-        { following: user._id },
-        { $pull: { following: user._id } }
-      );
+              // Remove mentor from all students' following arrays
+        await User.updateMany(
+          { following: user._id },
+          { $pull: { following: user._id } }
+        );
+      }
+
+      // If student: remove from all mentors' followers
+      if (user.role === "student") {
+        // Remove student from all mentors' followers
+        await User.updateMany(
+          { role: "mentor" },
+          { $pull: { followers: user._id } }
+        );
+      }
+
+      // Finally, delete the user
+      await user.deleteOne();
+
+      res.json({ message: "User and related data deleted successfully." });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-
-    // If student: remove from all mentors' followers
-    if (user.role === "student") {
-      // Remove student from all mentors' followers
-      await User.updateMany(
-        { role: "mentor" },
-        { $pull: { followers: user._id } }
-      );
-    }
-
-    // Finally, delete the user
-    await user.deleteOne();
-
-    res.json({ message: "User and related data deleted successfully." });
-  } catch (error) {
-    console.error("Error deleting user:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
+  };
 
 const updatePlaylistProgress = async (req, res) => {
   try {
@@ -347,7 +347,7 @@ const calculateOverallProgress = async (req, res) => {
       return typeof progress === 'number' ? progress : 0;
     });
 
-    console.log("Progress Map is ")
+    // console.log("Progress Map is ")
 
     // Check if any progress has been made
     const hasProgress = progressValues.some(val => val > 0);
