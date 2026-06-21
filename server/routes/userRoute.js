@@ -1,8 +1,19 @@
 const express = require('express');
-const { signUpUser, loginUser, getUserProfile, updateProfile, getMentors, 
-    getFollowedMentors, updatePlaylistProgress, getPlaylistProgress, 
-    toggleFollowMentor, calculateOverallProgress, getFollowersCount, deleteUser} = require('../controllers/userController');
-const { jwtAuthMiddleware } = require("../middleware/jwt.js");
+const {
+  signUpUser,
+  loginUser,
+  getUserProfile,
+  updateProfile,
+  getMentors,
+  getFollowedMentors,
+  updatePlaylistProgress,
+  getPlaylistProgress,
+  toggleFollowMentor,
+  calculateOverallProgress,
+  getFollowersCount,
+  deleteUser,
+} = require('../controllers/userController');
+const { jwtAuthMiddleware } = require('../middleware/jwt.js');
 
 const router = express.Router();
 

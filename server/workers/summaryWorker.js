@@ -6,13 +6,15 @@ const summaryQueue = new Queue('summaryQueue');
 
 summaryQueue.process(async (job, done) => {
   const { videoId, playlistId } = job.data;
-  console.log(`📽️ [PROCESSING] Starting summary for videoId: ${videoId}, playlistId: ${playlistId}`);
+  console.log(
+    `📽️ [PROCESSING] Starting summary for videoId: ${videoId}, playlistId: ${playlistId}`
+  );
 
   try {
     let video = await Summary.findOne({ videoId, playlistId });
 
     if (!videoId) {
-    //   console.log(`⚠️ [SKIP] Video not found in DB for videoId: ${videoId}`);
+      //   console.log(`⚠️ [SKIP] Video not found in DB for videoId: ${videoId}`);
       return done();
     }
 
@@ -28,7 +30,9 @@ summaryQueue.process(async (job, done) => {
 
     for (let attempt = video.attempts + 1; attempt <= 3; attempt++) {
       try {
-        console.log(`🔁 [TRY ${attempt}] Generating summary for videoId: ${videoId}`);
+        console.log(
+          `🔁 [TRY ${attempt}] Generating summary for videoId: ${videoId}`
+        );
         const summary = await generateSummaryFromGemini(videoId);
 
         if (!summary) throw new Error('Empty summary returned');
@@ -42,13 +46,15 @@ summaryQueue.process(async (job, done) => {
 
         return done();
       } catch (err) {
-        console.log(`⚠️ [ERROR] Attempt ${attempt} failed for ${videoId}: ${err.message}`);
+        console.log(
+          `⚠️ [ERROR] Attempt ${attempt} failed for ${videoId}: ${err.message}`
+        );
         video.attempts = attempt;
         await video.save();
 
         if (attempt < 3) {
           console.log(`⏱️ [WAITING] Retrying ${videoId} in 10 seconds...`);
-          await new Promise(r => setTimeout(r, 10000));
+          await new Promise((r) => setTimeout(r, 10000));
         }
       }
     }
@@ -59,7 +65,10 @@ summaryQueue.process(async (job, done) => {
     await video.save();
     return done();
   } catch (err) {
-    console.error(`🔥 [CRITICAL ERROR] Processing failed for videoId: ${videoId}`, err.message);
+    console.error(
+      `🔥 [CRITICAL ERROR] Processing failed for videoId: ${videoId}`,
+      err.message
+    );
     return done(err);
   }
 });
@@ -68,11 +77,13 @@ summaryQueue.process(async (job, done) => {
 const startSummaryWorker = async () => {
   const tasks = await Summary.find({
     status: { $in: ['pending', 'failed'] },
-    attempts: { $lt: 3 }
+    attempts: { $lt: 3 },
   });
 
-  tasks.forEach(task => {
-    console.log(`📌 [QUEUEING] Re-adding task for videoId: ${task.videoId}, playlistId: ${task.playlistId}`);
+  tasks.forEach((task) => {
+    console.log(
+      `📌 [QUEUEING] Re-adding task for videoId: ${task.videoId}, playlistId: ${task.playlistId}`
+    );
     summaryQueue.add({ videoId: task.videoId, playlistId: task.playlistId });
   });
 
@@ -81,7 +92,9 @@ const startSummaryWorker = async () => {
 
 // ❗ Add listener to see job-level errors
 summaryQueue.on('failed', (job, err) => {
-  console.error(`🚨 [JOB FAILED] videoId: ${job.data.videoId}, playlistId: ${job.data.playlistId} - ${err.message}`);
+  console.error(
+    `🚨 [JOB FAILED] videoId: ${job.data.videoId}, playlistId: ${job.data.playlistId} - ${err.message}`
+  );
 });
 
 module.exports = { summaryQueue, startSummaryWorker };

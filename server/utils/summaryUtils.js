@@ -1,5 +1,5 @@
 // summaryUtils.js
-const fetch = require("node-fetch");
+const fetch = require('node-fetch');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -18,8 +18,8 @@ const generateSummaryFromGemini = async (videoId) => {
         { text: textPrompt }, // Your text instructions
         {
           fileData: {
-            mimeType: "video/mp4", // Specify the mime type for video
-            fileUri: videoUrl,    // The actual YouTube video URL for the model to process
+            mimeType: 'video/mp4', // Specify the mime type for video
+            fileUri: videoUrl, // The actual YouTube video URL for the model to process
           },
         },
       ],
@@ -30,8 +30,8 @@ const generateSummaryFromGemini = async (videoId) => {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: contents }), // Pass the correctly structured contents
       }
     );
@@ -44,20 +44,28 @@ const generateSummaryFromGemini = async (videoId) => {
 
     // Check for API errors in the response
     if (data.error) {
-      console.error(`❌ [ERROR] Gemini API returned an error for videoId: ${videoId}`, data.error);
+      console.error(
+        `❌ [ERROR] Gemini API returned an error for videoId: ${videoId}`,
+        data.error
+      );
       // You might want to throw an error here to be caught by a retry mechanism
       return null;
     }
 
     const summary = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    console.log(summary)
+    console.log(summary);
     if (!summary) {
-      console.warn(`⚠️ [WARNING] No summary found in Gemini API response for videoId: ${videoId}`);
+      console.warn(
+        `⚠️ [WARNING] No summary found in Gemini API response for videoId: ${videoId}`
+      );
       return null;
     }
     return summary;
   } catch (error) {
-    console.error(`❌ [ERROR] Failed to fetch summary for videoId: ${videoId}`, error);
+    console.error(
+      `❌ [ERROR] Failed to fetch summary for videoId: ${videoId}`,
+      error
+    );
     return null;
   }
 };
@@ -85,21 +93,21 @@ async function generateMCQsWithGemini(combinedSummary, count = 20) {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
       }
     );
     const data = await res.json();
     if (data.error) {
-      console.error("Gemini API error:", data.error);
+      console.error('Gemini API error:', data.error);
       return null;
     }
     const mcqText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!mcqText) {
-      console.warn("No MCQs found in Gemini API response.");
+      console.warn('No MCQs found in Gemini API response.');
       return null;
     }
 
@@ -118,19 +126,17 @@ async function generateMCQsWithGemini(combinedSummary, count = 20) {
 
     try {
       const mcqs = JSON.parse(cleanedMcqText);
-      console.log("✅ Successfully parsed MCQs.");
+      console.log('✅ Successfully parsed MCQs.');
       return mcqs; // Return the parsed JSON array
     } catch (parseError) {
-      console.error("❌ Failed to parse MCQ JSON:", parseError);
-      console.error("Raw MCQ text received:", cleanedMcqText);
+      console.error('❌ Failed to parse MCQ JSON:', parseError);
+      console.error('Raw MCQ text received:', cleanedMcqText);
       return null;
     }
-
   } catch (error) {
-    console.error("Gemini MCQ generation error:", error);
+    console.error('Gemini MCQ generation error:', error);
     return null;
   }
 }
-
 
 module.exports = { generateSummaryFromGemini, generateMCQsWithGemini };
