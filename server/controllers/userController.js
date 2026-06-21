@@ -2,7 +2,6 @@ const User = require('../models/User');
 const Playlist = require('../models/Playlist');
 const Summary = require('../models/Summary');
 const { generateToken} = require('../middleware/jwt');
-const { getYouTubeVideoDuration } = require('../utils/youtube'); // Assuming you have a utility function to fetch video duration
 
 const signUpUser = async(req, res) => {
     try {
