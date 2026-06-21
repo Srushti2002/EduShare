@@ -13,8 +13,7 @@ services:
     depends_on:
       - mongo
     environment:
-      - MONGODB_URL=mongodb+srv://srushtideshmukh54:q7RRQok57lKbgQOV@cluster0.fuh7nda.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-
+      - MONGODB_URL=mongodb+srv://srushtivirendradeshmukh_db_user:6IeW9SxBjBkc2pPZ@cluster0.mltney5.mongodb.net/
   frontend:
     build: ./client
     ports:
