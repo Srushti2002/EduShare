@@ -84,7 +84,10 @@ const startSummaryWorker = async () => {
     console.log(
       `📌 [QUEUEING] Re-adding task for videoId: ${task.videoId}, playlistId: ${task.playlistId}`
     );
-    summaryQueue.add({ videoId: task.videoId, playlistId: task.playlistId });
+    summaryQueue.add(
+      { videoId: task.videoId, playlistId: task.playlistId },
+      { jobId: `${task.videoId}-${task.playlistId}` }
+    );
   });
 
   console.log(`[✔] Summary worker restarted with ${tasks.length} tasks`);

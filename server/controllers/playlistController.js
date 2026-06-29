@@ -46,10 +46,10 @@ const createPlaylist = async (req, res) => {
           playlistId: newPlaylist._id,
         });
 
-        summaryQueue.add({
-          videoId: video.videoId,
-          playlistId: newPlaylist._id,
-        });
+        summaryQueue.add(
+          { videoId: video.videoId, playlistId: newPlaylist._id },
+          { jobId: `${video.videoId}-${newPlaylist._id}` }
+        );
       })
     );
     res.status(201).json(newPlaylist);
