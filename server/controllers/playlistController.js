@@ -21,42 +21,46 @@ const createPlaylist = async (req, res) => {
       return res.status(400).json({ message: 'Invalid playlist URL' });
     const playlistId = match[1];
 
+    // Case 1: Same mentor already has this playlist
+    const ownDuplicate = await Playlist.findOne({ mentorId, url });
+    if (ownDuplicate) {
+      return res
+        .status(409)
+        .json({ code: 'OWN_DUPLICATE', message: 'You already created this playlist' });
+    }
+
     // Fetch video details (title, videoId, duration) from YouTube
     const videos = await getYouTubePlaylistVideosWithDurations(playlistId);
     if (!videos || videos.length === 0) {
       return res
         .status(400)
-        .json({
-          message: 'No videos found in playlist or failed to fetch videos',
-        });
+        .json({ message: 'No videos found in playlist or failed to fetch videos' });
     }
 
-    const newPlaylist = new Playlist({
-      title,
-      description,
-      url,
-      mentorId,
-      videos,
-    });
+    const newPlaylist = new Playlist({ title, description, url, mentorId, videos });
     await newPlaylist.save();
+
+    // For each video, reuse existing summary or queue a new one
     await Promise.all(
       videos.map(async (video) => {
-        await Summary.create({
-          videoId: video.videoId,
-          playlistId: newPlaylist._id,
-        });
-
-        await summaryQueue.add(
-          'generateSummary',
-          { videoId: video.videoId, playlistId: newPlaylist._id },
-          { ...JOB_OPTIONS, jobId: `${video.videoId}-${newPlaylist._id}` }
-        );
+        try {
+          await Summary.create({ videoId: video.videoId });
+          await summaryQueue.add(
+            'generateSummary',
+            { videoId: video.videoId },
+            { ...JOB_OPTIONS, jobId: video.videoId }
+          );
+        } catch (err) {
+          if (err.code === 11000) return; // summary already exists, reuse it
+          throw err;
+        }
       })
     );
+
     res.status(201).json(newPlaylist);
   } catch (err) {
     console.error('Error in createPlaylist:', err);
-    res.status(500).json({ message: 'Failed to create plalyist' });
+    res.status(500).json({ message: 'Failed to create playlist' });
   }
 };
 
@@ -95,8 +99,6 @@ const deletePlaylist = async (req, res) => {
   const { id } = req.params;
 
   try {
-    await Summary.deleteMany({ playlistId: id });
-
     await User.updateMany(
       { followingPlaylists: id },
       {
@@ -254,15 +256,15 @@ const getPlaylistEnrollmentStats = async (req, res) => {
 const generateMCQsForPlaylist = async (req, res) => {
   const { playlistId } = req.params;
   try {
-    // Fetch all summaries for this playlist
-    const summaries = await Summary.find({ playlistId });
+    const playlist = await Playlist.findById(playlistId);
+    if (!playlist) return res.status(404).json({ error: 'Playlist not found.' });
+
+    const videoIds = playlist.videos.map((v) => v.videoId);
+    const summaries = await Summary.find({ videoId: { $in: videoIds } });
     if (!summaries || summaries.length === 0) {
-      return res
-        .status(404)
-        .json({ error: 'No summaries found for this playlist.' });
+      return res.status(404).json({ error: 'No summaries found for this playlist.' });
     }
 
-    // Combine all summaries into one text block
     const combinedSummary = summaries
       .map((s) => s.summary)
       .filter(Boolean)

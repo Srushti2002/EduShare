@@ -9,6 +9,7 @@ const MentorDashboard = () => {
   const [url, setUrl] = useState("");
   const [playlists, setPlaylists] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [modal, setModal] = useState({ show: false, message: "" });
 
      const API_BASE_URL =
     import.meta.env.MODE === "development"
@@ -63,7 +64,11 @@ const MentorDashboard = () => {
       setUrl("");
       fetchPlaylists();
     } catch (err) {
+      if (err.response?.data?.code === "OWN_DUPLICATE") {
+        setModal({ show: true, message: "You have already created this playlist." });
+      } else {
         console.error("Error saving playlist:", err.response?.data || err.message);
+      }
     }
   };
 
@@ -91,6 +96,19 @@ const MentorDashboard = () => {
 
   return (
   <div className="flex flex-col justify-center bg-[#1F1F1F] text-white flex-1">
+    {modal.show && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="bg-[#2a2a2a] rounded-xl p-8 max-w-md w-full mx-4 text-center shadow-xl">
+          <p className="text-white text-lg mb-6">{modal.message}</p>
+          <button
+            onClick={() => setModal({ show: false, message: "" })}
+            className="bg-purple-700 hover:bg-purple-800 text-white font-semibold px-6 py-2 rounded transition"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    )}
     <div className="flex flex-col justify-center px-20 max-sm:px-4 max-sm:pt-10">
       <h2 className="text-3xl font-bold mb-8 text-center">Mentor Dashboard</h2>
 

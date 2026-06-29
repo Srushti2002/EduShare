@@ -17,10 +17,10 @@ const summaryQueue = new Queue('summaryQueue', { connection });
 const worker = new Worker(
   'summaryQueue',
   async (job) => {
-    const { videoId, playlistId } = job.data;
+    const { videoId } = job.data;
     console.log(`📽️ [PROCESSING] videoId: ${videoId}, attempt: ${job.attemptsMade + 1}`);
 
-    const video = await Summary.findOne({ videoId, playlistId });
+    const video = await Summary.findOne({ videoId });
     if (!video) return;
     if (video.status === 'completed') return;
 
@@ -37,7 +37,7 @@ const worker = new Worker(
 );
 
 worker.on('failed', async (job, err) => {
-  const { videoId, playlistId } = job.data;
+  const { videoId } = job.data;
   const isFinal = job.attemptsMade >= job.opts.attempts;
 
   console.error(
@@ -45,7 +45,7 @@ worker.on('failed', async (job, err) => {
   );
 
   await Summary.findOneAndUpdate(
-    { videoId, playlistId },
+    { videoId },
     { attempts: job.attemptsMade, ...(isFinal ? { status: 'failed' } : {}) }
   );
 });
@@ -53,7 +53,7 @@ worker.on('failed', async (job, err) => {
 // Re-queue pending/failed jobs on startup (safety net for Redis crash)
 const startSummaryWorker = async () => {
   const tasks = await Summary.find({
-    status: { $in: ['pending', 'failed'] },
+    status: 'pending',
     attempts: { $lt: 3 },
   });
 
@@ -61,8 +61,8 @@ const startSummaryWorker = async () => {
     console.log(`📌 [QUEUEING] Re-adding videoId: ${task.videoId}`);
     await summaryQueue.add(
       'generateSummary',
-      { videoId: task.videoId, playlistId: task.playlistId },
-      { ...JOB_OPTIONS, jobId: `${task.videoId}-${task.playlistId}` }
+      { videoId: task.videoId },
+      { ...JOB_OPTIONS, jobId: task.videoId }
     );
   }
 
