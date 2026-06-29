@@ -5,7 +5,7 @@ const { getYouTubePlaylistVideosWithDurations } = require('../utils/youtube'); /
 require('dotenv').config(); // This must be at the top
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const { summaryQueue } = require('../workers/summaryWorker');
+const { summaryQueue, JOB_OPTIONS } = require('../workers/summaryWorker');
 const Summary = require('../models/Summary');
 const { generateMCQsWithGemini } = require('../utils/summaryUtils');
 
@@ -48,7 +48,7 @@ const createPlaylist = async (req, res) => {
 
         summaryQueue.add(
           { videoId: video.videoId, playlistId: newPlaylist._id },
-          { jobId: `${video.videoId}-${newPlaylist._id}` }
+          { ...JOB_OPTIONS, jobId: `${video.videoId}-${newPlaylist._id}` }
         );
       })
     );

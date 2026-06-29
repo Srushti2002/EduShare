@@ -2,78 +2,43 @@ const Queue = require('bull');
 const { generateSummaryFromGemini } = require('../utils/summaryUtils');
 const Summary = require('../models/Summary');
 
+const JOB_OPTIONS = { attempts: 3, backoff: { type: 'fixed', delay: 10000 } };
+
 const summaryQueue = new Queue('summaryQueue');
 
-summaryQueue.process(async (job, done) => {
+summaryQueue.process(async (job) => {
   const { videoId, playlistId } = job.data;
-  console.log(
-    `📽️ [PROCESSING] Starting summary for videoId: ${videoId}, playlistId: ${playlistId}`
-  );
+  console.log(`📽️ [PROCESSING] videoId: ${videoId}, attempt: ${job.attemptsMade + 1}`);
 
-  try {
-    let video = await Summary.findOne({ videoId, playlistId });
+  const video = await Summary.findOne({ videoId, playlistId });
+  if (!video) return;
+  if (video.status === 'completed') return;
 
-    if (!videoId) {
-      //   console.log(`⚠️ [SKIP] Video not found in DB for videoId: ${videoId}`);
-      return done();
-    }
+  const summary = await generateSummaryFromGemini(videoId);
+  if (!summary) throw new Error('Empty summary returned');
 
-    if (video.status === 'completed') {
-      console.log(`✅ [SKIP] Already completed: ${videoId}`);
-      return done();
-    }
-
-    if (video.attempts >= 3) {
-      console.log(`❌ [SKIP] Max attempts reached for videoId: ${videoId}`);
-      return done();
-    }
-
-    for (let attempt = video.attempts + 1; attempt <= 3; attempt++) {
-      try {
-        console.log(
-          `🔁 [TRY ${attempt}] Generating summary for videoId: ${videoId}`
-        );
-        const summary = await generateSummaryFromGemini(videoId);
-
-        if (!summary) throw new Error('Empty summary returned');
-
-        console.log(`📝 [SUCCESS] Summary for ${videoId}:\n${summary}`);
-
-        video.summary = summary;
-        video.status = 'completed';
-        video.attempts = attempt;
-        await video.save();
-
-        return done();
-      } catch (err) {
-        console.log(
-          `⚠️ [ERROR] Attempt ${attempt} failed for ${videoId}: ${err.message}`
-        );
-        video.attempts = attempt;
-        await video.save();
-
-        if (attempt < 3) {
-          console.log(`⏱️ [WAITING] Retrying ${videoId} in 10 seconds...`);
-          await new Promise((r) => setTimeout(r, 10000));
-        }
-      }
-    }
-
-    // After 3 attempts
-    console.log(`❌ [FAILED] Final failure for ${videoId}`);
-    video.status = 'failed';
-    await video.save();
-    return done();
-  } catch (err) {
-    console.error(
-      `🔥 [CRITICAL ERROR] Processing failed for videoId: ${videoId}`,
-      err.message
-    );
-    return done(err);
-  }
+  video.summary = summary;
+  video.status = 'completed';
+  video.attempts = job.attemptsMade + 1;
+  await video.save();
+  console.log(`✅ [SUCCESS] Summary saved for ${videoId}`);
 });
 
-// 🔁 Restart pending/failed jobs on server restart
+summaryQueue.on('failed', async (job, err) => {
+  const { videoId, playlistId } = job.data;
+  const isFinal = job.attemptsMade >= job.opts.attempts;
+
+  console.error(
+    `${isFinal ? '❌ [FINAL FAILURE]' : '⚠️ [ATTEMPT FAILED]'} videoId: ${videoId}, attempt ${job.attemptsMade} - ${err.message}`
+  );
+
+  await Summary.findOneAndUpdate(
+    { videoId, playlistId },
+    { attempts: job.attemptsMade, ...(isFinal ? { status: 'failed' } : {}) }
+  );
+});
+
+// Re-queue pending/failed jobs on startup (safety net for Redis crash)
 const startSummaryWorker = async () => {
   const tasks = await Summary.find({
     status: { $in: ['pending', 'failed'] },
@@ -81,23 +46,14 @@ const startSummaryWorker = async () => {
   });
 
   tasks.forEach((task) => {
-    console.log(
-      `📌 [QUEUEING] Re-adding task for videoId: ${task.videoId}, playlistId: ${task.playlistId}`
-    );
+    console.log(`📌 [QUEUEING] Re-adding videoId: ${task.videoId}`);
     summaryQueue.add(
       { videoId: task.videoId, playlistId: task.playlistId },
-      { jobId: `${task.videoId}-${task.playlistId}` }
+      { ...JOB_OPTIONS, jobId: `${task.videoId}-${task.playlistId}` }
     );
   });
 
   console.log(`[✔] Summary worker restarted with ${tasks.length} tasks`);
 };
 
-// ❗ Add listener to see job-level errors
-summaryQueue.on('failed', (job, err) => {
-  console.error(
-    `🚨 [JOB FAILED] videoId: ${job.data.videoId}, playlistId: ${job.data.playlistId} - ${err.message}`
-  );
-});
-
-module.exports = { summaryQueue, startSummaryWorker };
+module.exports = { summaryQueue, startSummaryWorker, JOB_OPTIONS };
