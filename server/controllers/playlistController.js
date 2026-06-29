@@ -46,7 +46,8 @@ const createPlaylist = async (req, res) => {
           playlistId: newPlaylist._id,
         });
 
-        summaryQueue.add(
+        await summaryQueue.add(
+          'generateSummary',
           { videoId: video.videoId, playlistId: newPlaylist._id },
           { ...JOB_OPTIONS, jobId: `${video.videoId}-${newPlaylist._id}` }
         );
