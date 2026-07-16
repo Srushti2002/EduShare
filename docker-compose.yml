@@ -12,8 +12,8 @@ services:
       - "10000:10000"
     depends_on:
       - mongo
-    environment:
-      - MONGODB_URL=mongodb+srv://srushtivirendradeshmukh_db_user:6IeW9SxBjBkc2pPZ@cluster0.mltney5.mongodb.net/
+    env_file:
+      - ./server/.env
   frontend:
     build: ./client
     ports:
