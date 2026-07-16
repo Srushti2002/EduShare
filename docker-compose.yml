@@ -1,9 +1,11 @@
 services:
   redis:
     image: redis:7-alpine
+    restart: always
 
   backend:
     build: ./server
+    restart: always
     ports:
       - "10000:10000"
     depends_on:
