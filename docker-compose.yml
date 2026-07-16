@@ -1,19 +1,17 @@
-version: '3'
 services:
-  
-  mongo:
-    image: mongo
-    ports:
-      - "27017:27017"
+  redis:
+    image: redis:7-alpine
 
   backend:
     build: ./server
     ports:
       - "10000:10000"
     depends_on:
-      - mongo
+      - redis
     env_file:
       - ./server/.env
+    environment:
+      - REDIS_HOST=redis
   frontend:
     build: ./client
     ports:
