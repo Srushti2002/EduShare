@@ -20,6 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const allowedOrigins = [
   'http://localhost:5173',
   'https://edushare-frontend.onrender.com',
+  'https://d2dtz56prx0kug.cloudfront.net'
 ];
 app.use(
   cors({
