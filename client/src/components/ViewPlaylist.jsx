@@ -105,10 +105,20 @@ export default function ViewPlaylist() {
   const handleProgress = (state) => {
     if (currentVideo) {
       const videoId = currentVideo.split('v=')[1];
-      const watchedPercent = state.played * 100;
+      const watchedPercent = Math.min(state.played * 100, 99);
       setProgress((prev) => ({
         ...prev,
-        [videoId]: Math.max(prev[videoId] || 0, watchedPercent), 
+        [videoId]: Math.max(prev[videoId] || 0, watchedPercent),
+      }));
+    }
+  };
+
+  const handleEnded = () => {
+    if (currentVideo) {
+      const videoId = currentVideo.split('v=')[1];
+      setProgress((prev) => ({
+        ...prev,
+        [videoId]: 100,
       }));
     }
   };
@@ -213,6 +223,7 @@ export default function ViewPlaylist() {
                       height="360px"
                       playing
                       onProgress={handleProgress}
+                      onEnded={handleEnded}
                       onReady={(player) => {
                         const videoId = currentVideo.split('v=')[1];
                         const seconds = ((progress[videoId] || 0) / 100) * player.getDuration();
