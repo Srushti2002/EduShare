@@ -217,7 +217,7 @@ export default function ViewPlaylist() {
                         const videoId = currentVideo.split('v=')[1];
                         const seconds = ((progress[videoId] || 0) / 100) * player.getDuration();
                         if (seconds > 5) { // Optional: only seek if > 5 seconds progress
-                          player.seekTo(seconds, "seconds");
+                          setTimeout(() => player.seekTo(seconds, "seconds"), 300);
                         }
                       }}
                     />
